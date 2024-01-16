@@ -1,0 +1,14 @@
+server:
+  port: 8081
+
+application:
+  openAi:
+    apiKey: your-api-key
+    completionUrl: https://api.openai.com/v1/chat/completions
+
+  googleGemini:
+    projectId: your-google-project-id
+    location:  us-central1
+    modelName: gemini-pro-vision
+
+
