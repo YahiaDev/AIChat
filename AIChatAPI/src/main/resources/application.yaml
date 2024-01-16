@@ -3,12 +3,16 @@ server:
 
 application:
   openAi:
-    apiKey: your-api-key
+    apiKey: yout-open-ai-api-key
     completionUrl: https://api.openai.com/v1/chat/completions
+    maxRetryCall: 3
+    model: gpt-3.5-turbo-1106
+    temperature: 1
+    n: 1
 
   googleGemini:
-    projectId: your-google-project-id
-    location:  us-central1
+    projectId: your-google-cloud-project-id
+    location: us-central1
     modelName: gemini-pro-vision
 
 
