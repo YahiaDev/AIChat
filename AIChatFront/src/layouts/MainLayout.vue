@@ -8,7 +8,6 @@
           AI Chat
         </q-toolbar-title>
 
-        <!--div>Quasar v{{ $q.version }}</div-->
         <div>©Yahia Ammar's world</div>
       </q-toolbar>
     </q-header>
@@ -39,24 +38,13 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-//import EssentialLink from 'components/EssentialLink.vue';
 
-/*const linksList = [
-   {
-     title: 'About As',
-     caption: 'apps',
-     icon: 'school',
-     link: '/aboutAs'
-   }
-
-
-];*/
 
 export default defineComponent({
   name: 'MainLayout',
 
   components: {
-    //EssentialLink
+
   },
 
   setup() {

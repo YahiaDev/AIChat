@@ -2,41 +2,36 @@ package com.aichatapi.service.openai;
 
 import com.aichatapi.config.OpenAIConfiguration;
 import com.aichatapi.exception.AIChatException;
+import com.aichatapi.service.ChatService;
 import com.aichatapi.service.openai.model.Message;
 import com.aichatapi.service.openai.model.OpenAiChatRequest;
 import com.aichatapi.service.openai.model.OpenAiChatResponse;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
-public class OpenAIService {
+public class OpenAIService implements ChatService {
+
+    private final CacheManager caffeineCacheManager;
 
     private final OpenAIConfiguration openAIConfiguration;
-    private final Cache<Integer, OpenAiChatRequest> openAIChatRequestCash =
-            Caffeine.newBuilder()
-                    .expireAfterWrite(10, TimeUnit.MINUTES)
-                    .maximumSize(100)
-                    .build();
-    private final Cache<Integer, Integer> openAICallRetry =
-            Caffeine.newBuilder()
-                    .expireAfterWrite(10, TimeUnit.MINUTES)
-                    .maximumSize(100)
-                    .build();
 
-    public OpenAIService(OpenAIConfiguration openAIConfiguration) {
+
+    public OpenAIService(CacheManager CaffeineCacheManager, OpenAIConfiguration openAIConfiguration) {
+        this.caffeineCacheManager = CaffeineCacheManager;
         this.openAIConfiguration = openAIConfiguration;
     }
 
+
+    @Override
     public String chat(String message, Integer chatSessionId) {
         try {
             var request = this.getOpenAIChatRequest(chatSessionId);
@@ -69,47 +64,45 @@ public class OpenAIService {
     }
 
     private boolean retry(Integer chatSessionId) {
-        Integer numberOfRetry = this.openAICallRetry.getIfPresent(chatSessionId);
+        Cache cache = this.getCache("open_ai_retry_request_cache");
+        Integer numberOfRetry = cache.get(chatSessionId, Integer.class);
 
         if (ObjectUtils.isEmpty(numberOfRetry)) {
-            this.openAICallRetry.put(chatSessionId, 1);
+            cache.put(chatSessionId, 1);
             return true;
         }
 
         if (ObjectUtils.isNotEmpty(numberOfRetry) && numberOfRetry <= this.openAIConfiguration.getMaxRetryCall()) {
-            this.openAICallRetry.put(chatSessionId, ++numberOfRetry);
+            cache.put(chatSessionId, ++numberOfRetry);
             return true;
         }
 
         return false;
     }
 
+    private Cache getCache(String cacheName) {
+        return Optional.ofNullable(this.caffeineCacheManager.getCache(cacheName))
+                .orElseThrow(() -> new AIChatException(STR. "cache name  \{ cacheName } not configured" ));
+    }
+
     private OpenAiChatRequest getOpenAIChatRequest(Integer chatSessionId) {
-        return Optional
-                .ofNullable(this.openAIChatRequestCash.getIfPresent(chatSessionId))
+        var cache = this.getCache("open_ai_request_cache");
+        return Optional.ofNullable(cache.get(chatSessionId, OpenAiChatRequest.class))
                 .orElseGet(() -> {
-                    this.openAIChatRequestCash.put(chatSessionId,
-                            new OpenAiChatRequest(this.openAIConfiguration.getModel(),
-                                    new ArrayList<>(List.of(new Message("system", this.openAIConfiguration.getOpenAIContext()))),
-                                    this.openAIConfiguration.getN(),
-                                    this.openAIConfiguration.getTemperature()));
-                    return this.openAIChatRequestCash.getIfPresent(chatSessionId);
-                });
+                            cache.put(chatSessionId,
+                                    new OpenAiChatRequest(this.openAIConfiguration.getModel(),
+                                            new ArrayList<>(List.of(new Message("system", this.openAIConfiguration.getOpenAIContext()))),
+                                            this.openAIConfiguration.getN(),
+                                            this.openAIConfiguration.getTemperature()));
+                            return cache.get(chatSessionId, OpenAiChatRequest.class);
+                        }
+                );
     }
 
 
-   /* @Cacheable(value = "jsonCache", key = "#key")
-    public JSONObject getOpenAiParamsCash(String key) {
-        // Simulating some time-consuming process to generate the JSON object
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("key", key);
-        return jsonObject;
-    }*/
-
-    @CacheEvict(value = "jsonCache", key = "#key")
-    public void evictCachedJsonObject(String key) {
-        // This method can be used to evict or clear the cache for a specific key
+    @Override
+    public boolean stopChat(String message) {
+        return ObjectUtils.isEmpty(message) || message.contains(this.openAIConfiguration.getStopChatWord());
     }
-
 
 }

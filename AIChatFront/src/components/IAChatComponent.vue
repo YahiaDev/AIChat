@@ -2,7 +2,8 @@
 <template>
   <div class="q-pa-md row justify-center">
     <div style="width: 100%; max-width: 700px">
-      <q-chat-message label='Monday, 1 January 2024' />
+      <!--q-chat-message label='Monday, 1 January 2024' /-->
+      <q-chat-message :label='getDate()' />
 
 
       <q-chat-message v-for="message in messages" :key="message.text" :name="message.from" :text="[message.text]"
@@ -22,11 +23,12 @@
 
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { Notify } from 'quasar'
 import { Client } from '@stomp/stompjs';
 //import { api } from 'boot/axios'
-import { useQuasar } from 'quasar'
+import { Message } from 'components/models';
+
 
 
 export default defineComponent({
@@ -37,12 +39,11 @@ export default defineComponent({
       chatSessionId: Math.floor(Math.random() * 10000),
       audioOpenAi: new Audio('src/assets/open-ia-message.mp3'),
       audioGoogleGemini: new Audio('src/assets/gemini-message.mp3'),
-      $q: useQuasar(),
       showSpinner: true,
       client: null,
       messageDisabled: false,
       newMessage: '',
-      messages: []
+      messages: ref<Message[]>([])
     }
   },
   mounted() {
@@ -62,6 +63,12 @@ export default defineComponent({
   },
 
   methods: {
+
+    getDate() {
+      var date = new Date();
+      var options = { year: 'numeric', month: 'long', day: 'numeric' };
+      return new Intl.DateTimeFormat('en-US', options).format(date);
+    },
     handleEnter() {
       this.messageDisabled = true;
       this.showSpinner = false;

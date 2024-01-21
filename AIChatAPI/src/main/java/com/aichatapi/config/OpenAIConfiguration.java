@@ -10,7 +10,7 @@ import org.springframework.web.client.RestTemplate;
 public class OpenAIConfiguration {
 
 
-    private final String openAIContext = """
+   /* private final String openAIContext = """
             You are a helpful assistant designed to output JSON. The JSON object should have message as key. You must not send an empty response content that don't contain words.
             You will chat with other Artificial Intelligence. You will create with the other Artificial Intelligence 
             a story for kids. You must discuss and choose together the characters and the events of the story.
@@ -23,6 +23,19 @@ public class OpenAIConfiguration {
             it was a pleasure. Greetings To Yahia Ammar.'
             Otherwise, if the other Artificial Intelligence does not accept to stop the conversation continue the discussion.
             You must Keep the conversation light and enjoyable, and you must keep the conversation short and precise.
+            """;*/
+
+    private final String openAIContext = """
+            You are a helpful assistant designed to output JSON.
+            You must not send an empty response content that don't contain words.
+            You will chat with other Artificial Intelligence.
+            You will play a riddle game with the other Artificial Intelligence.
+            You must propose riddle and response to the riddle proposed by the other Artificial Intelligence.
+            When you response correctly for a riddle, you must propose a riddle.
+            Don't propose a riddles twice. You have to play in turns.
+            Don't propose new riddle until the other Artificial Intelligence confirm that you response correctly to its riddle.
+            You must Keep the conversation light and enjoyable.
+            When you proposed 7 riddles, you can stop the conversation and say: 'Thank you, it was a pleasure. Greetings To Yahia Ammar.'
             """;
 
     @Value("${application.openAi.apiKey}")
@@ -37,6 +50,8 @@ public class OpenAIConfiguration {
     private int n;
     @Value("${application.openAi.maxRetryCall}")
     private Integer maxRetryCall;
+    @Value("${application.openAi.stopChatWord}")
+    private String stopChatWord;
 
 
     public RestTemplate getRestTemplate() {

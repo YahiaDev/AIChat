@@ -4,7 +4,6 @@ import com.aichatapi.controller.input.ChatMessage;
 import com.aichatapi.event.ChatEvent;
 import com.aichatapi.event.ChatEventData;
 import com.aichatapi.exception.AIChatException;
-import com.aichatapi.service.GoogleGeminiService;
 import com.aichatapi.service.openai.OpenAIService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,8 +13,8 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class AIChatService {
 
-    private final OpenAIService openAIService;
-    private final GoogleGeminiService googleGeminiService;
+    private final ChatService openAIService;
+    private final ChatService googleGeminiService;
     private final ApplicationEventPublisher publisher;
 
     public AIChatService(OpenAIService openAIService,
@@ -35,14 +34,10 @@ public class AIChatService {
         var googleGeminiMessage = this.chatWithGoogleGemini(chatGPTMessage, chatSessionId);
         while (!openAIStoppedTheConversion && !googleGeminiStoppedTheConversation) {
             chatGPTMessage = this.chatWithOpenAI(googleGeminiMessage, chatSessionId);
-            if (chatGPTMessage.contains("Yahia")) {
-                openAIStoppedTheConversion = true;
-            }
-            googleGeminiMessage = this.chatWithGoogleGemini(chatGPTMessage, chatSessionId);
-            if (googleGeminiMessage.contains("Yahia")) {
-                googleGeminiStoppedTheConversation = true;
-            }
+            openAIStoppedTheConversion = this.openAIService.stopChat(chatGPTMessage);
 
+            googleGeminiMessage = this.chatWithGoogleGemini(chatGPTMessage, chatSessionId);
+            googleGeminiStoppedTheConversation = this.googleGeminiService.stopChat(googleGeminiMessage);
         }
 
         log.info("Chat Session {} ended", chatSessionId);

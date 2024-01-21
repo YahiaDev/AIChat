@@ -6,6 +6,7 @@ application:
     apiKey: yout-open-ai-api-key
     completionUrl: https://api.openai.com/v1/chat/completions
     maxRetryCall: 3
+    stopChatWord: Yahia
     model: gpt-3.5-turbo-1106
     temperature: 1
     n: 1
@@ -14,5 +15,6 @@ application:
     projectId: your-google-cloud-project-id
     location: us-central1
     modelName: gemini-pro-vision
+    stopChatWord: Yahia
 
 
